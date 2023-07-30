@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Ruta a la carpeta que contiene las canciones de osu
+osu_folder="/home/hinami/osu/Songs/"
+
+# Función para verificar si un archivo .osu contiene las líneas "Mode: 1", "Mode: 2" o "Mode: 3"
+function has_mode_lines() {
+    local osu_file="$1"
+    grep -qE "Mode: (1|2|3)" "$osu_file"
+}
+
+# Función para eliminar los archivos .osu que contienen las líneas de modo en una carpeta
+function delete_osu_files() {
+    local folder="$1"
+    for osu_file in "$folder"/*.osu; do
+        if has_mode_lines "$osu_file"; then
+            echo "Eliminando $osu_file"
+            rm "$osu_file"
+        fi
+    done
+}
+
+# Función para eliminar carpetas vacías
+function delete_empty_folders() {
+    local parent_folder="$1"
+    find "$parent_folder" -depth -type d -empty -exec sh -c 'rmdir "{}" && echo "Eliminando carpeta: {}"' \;
+}
+
+# Recorrer todas las subcarpetas de osu_folder y eliminar los archivos .osu que contienen las líneas de modo
+while IFS= read -r -d '' subfolder; do
+    delete_osu_files "$subfolder"
+done < <(find "$osu_folder" -type d -print0)
+
+# Eliminar las carpetas vacías dentro de osu_folder y mostrar los nombres de las carpetas eliminadas
+delete_empty_folders "$osu_folder"
+
